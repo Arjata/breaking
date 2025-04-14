@@ -248,11 +248,13 @@ class CarrierEnemy(Enemy):
             self.drone_timer = 0
 
     def _release_drones(self):
+        groups = list(self.groups())
         for i in range(-1, 2):
             pos = (self.rect.centerx + i * 20, self.rect.centery + 20)
             drone = BasicEnemy(pos, hp=1, score_value=50)
             drone.speed = Vector2(0, 200)
-            self.groups()[0].add(drone)
+            for group in groups:
+                group.add(drone)
 
     def shoot_pattern(self, bullet_group):
         if self.shoot_timer >= 2.5:
@@ -340,29 +342,21 @@ class Boss(Enemy):
         self.minion_spawn_interval = 5.0  # 5秒召唤一次
 
     def add_phase_callback(self, phase: int, callback: any):
-        self.phase_callback[self.phase].append(callback)
+        self.phase_callback[phase].append(callback)
 
     def take_damage(self, damage):  # 重写Boss的伤害处理
         super().take_damage(damage)
-        if (
-            self.hp <= self.max_hp * 0.5
-            and self.hp > self.max_hp * 0.3
-            and self.phase != 2
-        ):
+        if self.hp <= self.max_hp * 0.5 and self.phase < 2:
             self.phase = 2
             self.image.fill((150, 0, 200))
             for _phase_callback in self.phase_callback[self.phase]:
                 _phase_callback()
-        elif (
-            self.hp <= self.max_hp * 0.3
-            and self.hp > self.max_hp * 0.1
-            and self.phase != 3
-        ):
+        if self.hp <= self.max_hp * 0.3 and self.phase < 3:
             self.phase = 3
             self.image.fill((255, 255, 150))
             for _phase_callback in self.phase_callback[self.phase]:
                 _phase_callback()
-        elif self.hp <= self.max_hp * 0.1 and self.phase != 4:
+        if self.hp <= self.max_hp * 0.1 and self.phase < 4:
             self.phase = 4
             self.image.fill((255, 0, 100))
             for _phase_callback in self.phase_callback[self.phase]:
@@ -608,7 +602,6 @@ class Boss(Enemy):
                 speed=180,
                 color=(255, 150, 0),
                 player_pos_ref=lambda: self.player_pos,
-                delay=1.0,  # 1秒后开始追踪
             )
             bullet_group.add(bullet)
 

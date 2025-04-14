@@ -4,6 +4,7 @@ from random import uniform, randint
 from pygame.math import Vector2
 from ..core.config import Config
 from ..entities.player import Player, Bullet
+from threading import Timer
 
 
 class EnemyBullet(pygame.sprite.Sprite):
@@ -29,7 +30,7 @@ class EnemyBullet(pygame.sprite.Sprite):
 
 
 class HomingEnemyBullet(EnemyBullet):
-    def __init__(self, pos, direction, speed, color, player_pos_ref, max_alive_time=4):
+    def __init__(self, pos, direction, speed, color, player_pos_ref, max_alive_time=3):
         super().__init__(pos, direction, speed, color)
         self.player_pos_ref = player_pos_ref
         self.turn_rate = 120  # 每秒转向角度
@@ -149,17 +150,22 @@ class MineBullet(EnemyBullet):
     def update(self, dt):
         self.timer += dt
         if self.timer >= self.delay and not self.exploded:
-            b0 = 0
             self._explode()
             self.exploded = True
+            # 在 _explode 里已经把自己从组里移除，或在这里调用
             self.kill()
 
     def _explode(self):
+        # 先把自己要从组里移除的操作留到外面 kill()
+        # 遍历自己当前所属的所有组，将新子弹加进去
+        groups = list(self.groups())
         for angle in range(0, 360, 30):
             direction = Vector2(1, 0).rotate(angle)
-            self.groups()[0].add(
-                EnemyBullet(self.rect.center, direction, speed=350, color=self.color)
+            new_bullet = EnemyBullet(
+                self.rect.center, direction, speed=350, color=self.color
             )
+            for group in groups:
+                group.add(new_bullet)
 
 
 class BlackHole(pygame.sprite.Sprite):

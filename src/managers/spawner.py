@@ -25,7 +25,11 @@ class Spawner:
 
     def get_current_phase(self):
         """计算当前阶段（每5波为一个阶段）"""
-        return math.floor(self.wave / self.boss_wave_interval) + 1
+        phase = math.floor(self.wave / self.boss_wave_interval)
+        if phase == 0:
+            return 1
+        else:
+            return phase
 
     def update(self, dt, enemy_group):
         """更新生成逻辑"""
@@ -115,48 +119,58 @@ class Spawner:
         boss_multiplier = phase**1.3
         self.active_boss.max_hp *= boss_multiplier * 5
         self.active_boss.hp = self.active_boss.max_hp
-        self.active_boss.attack_speed /= math.sqrt(phase)
+        self.active_boss.attack_speed /= math.sqrt(phase) * 1.5
         self.active_boss.score_value *= phase
         self.active_boss.attack_patterns = [self.active_boss._spiral_attack]
-
-        # 添加阶段专属攻击模式
-        if phase >= 2:
-            self.active_boss.attack_patterns.extend([self.active_boss._spread_attack])
+        if phase >= 1:
             self.active_boss.add_phase_callback(
                 2,
-                lambda p: self.active_boss.attack_patterns.extend(
+                lambda: self.active_boss.attack_patterns.extend(
                     [self.active_boss._ring_attack]
                 ),
             )
-        if phase >= 3:
-            self.active_boss.attack_patterns.extend([self.active_boss._homing_attack])
+
+        # 添加阶段专属攻击模式
+        if phase >= 2:
+            self.active_boss.attack_patterns.extend([self.active_boss._dna_attack])
             self.active_boss.add_phase_callback(
-                2,
-                lambda p: self.active_boss.attack_patterns.extend(
-                    [self.active_boss._bounce_attack]
+                3,
+                lambda: self.active_boss.attack_patterns.extend(
+                    [self.active_boss._shotgun_attack]
                 ),
             )
-        if phase >= 4:
-            self.active_boss.attack_patterns.extend(
-                [
-                    self.active_boss._minefield_attack,  # 新增地雷阵
-                ]
+        if phase >= 3:
+            self.active_boss.attack_patterns.extend([self.active_boss._bounce_attack])
+            self.active_boss.add_phase_callback(
+                2,
+                lambda: self.active_boss.attack_patterns.extend([]),
             )
             self.active_boss.add_phase_callback(
                 3,
-                lambda p: self.active_boss.attack_patterns.extend(
-                    [
-                        self.active_boss._cross_lasers_attack,  # 新增交叉激光
-                    ]
+                lambda: self.active_boss.attack_patterns.extend(
+                    [self.active_boss._homing_ring]
                 ),
             )
             self.active_boss.add_phase_callback(
                 4,
-                lambda p: self.active_boss.attack_patterns.extend(
-                    [
-                        self.active_boss._matrix_attack,  # 新增矩阵弹幕
-                        self.active_boss._homing_ring,
-                    ]
+                lambda: self.active_boss.attack_patterns.extend([]),
+            )
+        if phase >= 4:
+            self.active_boss.attack_patterns.extend(
+                [
+                    self.active_boss._rotating_shield,
+                ]
+            )
+            self.active_boss.add_phase_callback(
+                3,
+                lambda: self.active_boss.attack_patterns.extend(
+                    [self.active_boss._matrix_attack]
+                ),
+            )
+            self.active_boss.add_phase_callback(
+                4,
+                lambda: self.active_boss.attack_patterns.extend(
+                    [self.active_boss._minefield_attack]
                 ),
             )
 

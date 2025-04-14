@@ -131,7 +131,10 @@ class GameScene:
 
         # --- 渲染组管理 (原始方式，效率低) ---
         # 清空再添加效率很低，最好在对象创建/销毁时管理组
-        self.all_sprites.empty()
+        try:
+            self.all_sprites.empty()
+        except KeyError:
+            pass
         self.all_sprites.add(self.player)
         self.all_sprites.add(
             self.enemies, self.bullets, self.enemy_bullets, self.powerups
